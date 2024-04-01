@@ -22,7 +22,7 @@ class GameWindow < Gosu::Window
     check_collisions
 
     @score += 1
-    @speed += 0.02  # Збільшення швидкості
+    @speed += 0.05  # Збільшення швидкості
   end
 
   def draw
@@ -39,8 +39,7 @@ class GameWindow < Gosu::Window
   end
 
   def spawn_platforms
-    gap_size = rand(-100..100)  # Збільшення відстані між платформами
-    y_position = height - gap_size - 100
+    gap_size = rand(100..400)  # Збільшення відстані між платформами
     @platforms << Platform.new(width, height - gap_size, gap_size)
   end
 
@@ -106,22 +105,32 @@ class Player < GameObject
   def initialize
     super(50, 500, 50, 50, "player.png")
     @vel_y, @jump_power, @gravity, @health = 0, 20, 1, 3
-    @speed = 5  # Збереження швидкості для руху гравця
+    @walking_frames = Gosu::Image.load_tiles("walking_animation.png", 50, 50)
+    @current_frame = 0
+    @frame_delay = 5
+    @frame_counter = 0
   end
 
   def update
     @y += @vel_y
     @vel_y += @gravity
 
-    # Перевіряємо, чи відпав гравець за межі екрану
     die if @y > 1080
-
-    # Якщо гравець помер, відновлюємо його
     respawn if dead?
+
+    @frame_counter += 1
+    if @frame_counter % @frame_delay == 0
+      @current_frame = (@current_frame + 1) % @walking_frames.size
+    end
   end
 
   def draw
-    super
+    @walking_frames[@current_frame].draw(@x, @y, 1)
+  end
+
+  def die
+    @health = 0
+    @score = 0
   end
 
   def move_left
@@ -159,9 +168,10 @@ class Player < GameObject
   end
 end
 
+
 class Platform < GameObject
   def initialize(x, y, gap_size)
-    super(512, 512 - gap_size, 150, gap_size * 2, "platform.png")
+    super(x, y - gap_size, 300, gap_size * 2, "platform.png")
   end
 
   def top
