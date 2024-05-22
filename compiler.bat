@@ -1,1 +1,0 @@
-ocra main.rb
